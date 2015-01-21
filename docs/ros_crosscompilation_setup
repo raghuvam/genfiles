@@ -1,0 +1,19 @@
+
+###########################
+##  ROS CROSSCOMPILATION ##
+###########################
+
+> Create source dir 
+	host$ mkdir ws_ros_arm
+	host$ mkdir src
+
+> Extract the Ubuntu ROOTFS and note the path eg: ~/ubuntu_arm/rootfs/
+	host$ tar -xvzf ubunut_rootfs.tar.gz
+
+> Add these twoline to the ~/.bashrc file.
+ 	host$ export UBUNTU_ARM_ROOTFS=~/ubuntu_arm/rootfs/
+ 	host$ source ${UBUNTU_ARM_ROOTFS}/opt/ros/hydro/setup.sh
+ 	host$ source ${UBUNTU_ARM_ROOTFS}/opt/ros/hydro/setup.bash
+
+> 
+

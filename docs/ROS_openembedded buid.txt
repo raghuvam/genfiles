@@ -1,0 +1,91 @@
+
+### ROS OPEN EMBEDDED BUILD ####
+
+* Setup the proxy as per the ti proxy settings doc (for git, http)
+
+* Install some required packages for cross compile Environment
+ 
+   host$ sudo apt-get install build-essential chrpath diffstat gawk git-core libsdl1.2-dev texinfo unzip wget xterm
+
+* Create a work space to build ROS opemembedded and download the openembedded layers and recepies.
+
+	host$ mkdir ~/devel && cd ~/devel
+	host$ git clone git://git.openembedded.org/bitbake/
+	host$ git clone git://git.openembedded.org/openembedded-core
+	host$ git clone git://git.openembedded.org/meta-openembedded
+	host$ git clone https://github.com/bmwcarit/meta-ros.git
+
+* Create a link for the bitbake "folder" in  ~/devel/openembedded-core/ and source the env file
+
+  	host$ ~/devel/bitbake ~/devel/openembedded-core/bitbake
+	source openembedded-core/oe-init-build-env
+
+* The oe-init-build-env script creates an initial build directory with a default local.conf configuration file. Now, adjust the settings in the local.conf for your use case and  	your machine:
+
+    	> Set the MACHINE setting to the machine architecture that you want to target. By default, it is set to qemux86 to target to a x86 qemu virtual machine.
+    	> Important are the parallelism options. Even with the right settings for a large multi-core machine, building an image takes over an hour. Without the parallelism 		  options, the machine only uses one core and does one task at a time and hence, building an image probably takes a whole day or more. So, you better change the 		  parallelism options if you want to see results today. With an eight-core machine and SSD harddisk, we suggest to use BB_NUMBER_THREADS ?= "12" and PARALLEL_MAKE ?= "-j 		  8".  
+
+*  Next, add the required layers, meta-oe and meta-ros, to the build environment by modifying the bblayers.conf to set the variable BBLAYERS with these lines:
+
+	BBLAYERS ?= "\
+  	  /home/me/devel/openembedded-core/meta \
+  	  /home/me/devel/meta-openembedded/meta-oe \
+  	  /home/me/devel/meta-ros \
+	"
+
+* Now invoke bitbake tool to build the embedded image with ROS.
+
+	host$ bitbake core-image-ros-roscore
+
+  If you are working behind a proxy the above command might give some ERROR realted like,
+	ERROR Compiling
+	"Download error on http://pypi.python.org/simple/nose "
+  	
+	> You need a pip patch to work behind the proxy, this requires pip to apply the patch. So, install pip package and apply the patch.	
+
+	host$ pip install --ignore-installed git+https://github.com/qwcode/pip@proxy_fix#egg=pip 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

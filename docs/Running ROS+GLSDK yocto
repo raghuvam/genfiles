@@ -1,0 +1,62 @@
+
+
+##ERROR 1
+
+import roslaucnh 
+Import Error : module not found
+
+SOLUTION:
+
+This is beacause the ROS yocot doesn't have setup.sh setup.bash which will setup the ENV variable to run ROS.
+So, copy the all *.* files under {PC_ROOT}/opt/ros/hydro/ to {VAYU_ROOTFS}/opt/ros/hyrdro and source the .sh
+and .bash files on boot and run "roscore".
+
+## ERROR 2
+
+ROS_MASTER_URI not set 
+
+SOULTION : export ROS_MSATER_URI=http://localhost:11311
+
+
+## ERROR 3 
+
+Invalid ROS_IP
+
+SOLUTION:
+-> Do 'ip addr show', and find the ip address of EVM. 
+-> export ROS_IP=172.xx.xx.xx
+
+## ERROR 4
+
+rosout service can't started.
+
+SOLUTION :
+
+note: This error is because the roscore command is not able to find the rosout service command.
+
+
+#############
+## create a ros_init script file while which should be sourced after the boot
+####
+
+## file /etc/init.d/ros_init
+#!/bin/sh
+
+# export ROS environment variables
+source /opt/ros/hydro/setup.sh
+source /opt/ros/hydro/setup.bash
+
+## Export some ROS variables
+export ROS_MASTER_URI=http://localhost:11311
+export ROS_IP="$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)"
+export ROS_ROOT=/opt/ros/hydro
+export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/site-packages
+touch /opt/ros/hydro/.catkin
+
+# EOF file
+##############
+
+
+
+	
+

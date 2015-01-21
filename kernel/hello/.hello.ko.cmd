@@ -1,0 +1,1 @@
+cmd_/user/x0221391/junk/kernel/hello/hello.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.2.0-69-generic/scripts/module-common.lds --build-id  -o /user/x0221391/junk/kernel/hello/hello.ko /user/x0221391/junk/kernel/hello/hello.o /user/x0221391/junk/kernel/hello/hello.mod.o

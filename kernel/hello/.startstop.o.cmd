@@ -1,0 +1,1 @@
+cmd_/user/x0221391/junk/kernel/hello/startstop.o := ld -m elf_x86_64   -r -o /user/x0221391/junk/kernel/hello/startstop.o /user/x0221391/junk/kernel/hello/start.o /user/x0221391/junk/kernel/hello/stop.o 

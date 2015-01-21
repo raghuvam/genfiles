@@ -1,0 +1,25 @@
+
+#ERROR 1
+
+Traceback (most recent call last):
+  File "/home/x0221391/tmp/ros_cross/build/catkin_generated/generate_cached_setup.py", line 21, in <module>
+    code = generate_environment_script('/home/x0221391/tmp/ros_cross/devel/env.sh')
+  File "	dist-packages/catkin/environment_cache.py", line 61, in generate_environment_script
+    output = subprocess.check_output([env_script, sys.executable, '-c', python_code])
+  File "/usr/lib/python2.7/subprocess.py", line 537, in check_output
+    process = Popen(stdout=PIPE, *popenargs, **kwargs)
+  File "/usr/lib/python2.7/subprocess.py", line 679, in __init__
+    errread, errwrite)
+  File "/usr/lib/python2.7/subprocess.py", line 1249, in _execute_child
+    raise child_exception
+OSError: [Errno 2] No such file or directory
+CMake Error at /user/x0221391/ubuntu_arm/rootfs/opt/ros/hydro/share/catkin/cmake/safe_execute_process.cmake:11 (message):
+  execute_process(/usr/bin/python
+  "/home/x0221391/tmp/ros_cross/build/catkin_generated/generate_cached_setup.py")
+  returned error code 1
+Call Stack (most recent call first):
+  /user/x0221391/ubuntu_arm/rootfs/opt/ros/hydro/share/catkin/cmake/all.cmake:177 (safe_execute_process)
+  /user/x0221391/ubuntu_arm/rootfs/opt/ros/hydro/share/catkin/cmake/catkinConfig.cmake:20 (include)
+  CMakeLists.txt:52 (find_package)
+
+

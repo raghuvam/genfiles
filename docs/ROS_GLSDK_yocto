@@ -1,0 +1,188 @@
+
+### Building ROS on GLSDK using Yocto ########
+
+* First Build GLSDK as per instrctions in DRA7xx software developers guide on wiki.
+
+* Once the GLSDK build is successful, next step is to build meta-ROS layer on to this image.
+
+* Addition of meta-ros: (Reference: http://wiki.ros.org/hydro/Installation/OpenEmbedded)
+
+* Add meta-ros layer:
+
+  *  Edit configs/glsdk/glsdk-6.10.00.02.txt
+  *  Add the line above meta-glsdk
+
+* meta-ros,git://github.com/bmwcarit/meta-ros.git,master,HEAD,layers=
+
+	  *  Addition of packagegroup:
+	  *  Edit sources/meta-glsdk/meta-arago-distro/recipes-core/images/arago-glsdk-multimedia-image.bb
+	  *  Add the packagegroups that are present in the meta-ros, namely:
+			  *  ros-world.bb
+			  *  ros-comm.bb
+* At this point, you can create a simply packagegroup definition in the same location as mentioned in b.i and include a small set of the modules referred in the ros packagegroups.
+
+##########################################
+* ERROR #1
+
+/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/bin/arm-linux-gnueabihf-g++  -fPIC  -march=armv7-a -marm -mthumb-interwork -mfloat-abi=hard -mfpu=neon -mtune=cortex-a15  --sysroot=/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm  -isystem/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/arm-linux-gnueabihf/include  -fstack-protector -O2 -pipe -g -feliminate-unused-debug-types -fpermissive -fpermissive   -L/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/arm-linux-gnueabihf/lib -Wl,-rpath-link,/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/arm-linux-gnueabihf/lib -Wl,-O1 -Wl,--hash-style=gnu -shared -Wl,-soname,libkdl_conversions.so -o devel/lib/libkdl_conversions.so CMakeFiles/kdl_conversions.dir/src/kdl_msg.cpp.o  -L/opt/ros/hydro/lib /opt/ros/hydro/lib/libroscpp_serialization.so /opt/ros/hydro/lib/librostime.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libboost_date_time-mt.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libboost_system-mt.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libboost_thread-mt.so /opt/ros/hydro/lib/libcpp_common.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libconsole_bridge.so /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/liborocos-kdl.so.1.3.0 -Wl,-rpath,/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib:/opt/ros/hydro/lib:
+| /opt/ros/hydro/lib/libroscpp_serialization.so: file not recognized: File format not recognized
+| collect2: error: ld returned 1 exit status
+| make[2]: *** [devel/lib/libkdl_conversions.so] Error 1
+| make[2]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/kdl-conversions/1.10.8-r0/geometry-1.10.8/kdl_conversions/build'
+| make[1]: *** [CMakeFiles/kdl_conversions.dir/all] Error 2
+| make[1]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/kdl-conversions/1.10.8-r0/geometry-1.10.8/kdl_conversions/build'
+| make: *** [all] Error 2
+| ERROR: oe_runmake failed
+| WARNING: exit code 1 from a shell command.
+| ERROR: Function failed: do_compile (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/kdl-conversions/1.10.8-r0/temp/log.do_compile.23661)
+ERROR: Task 3759 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry/kdl-conversions_1.10.8.bb, do_compile) failed with exit code '1'
+
+SOLUTION :
+Error caused because in the kdl-conversions_1.10.8.bb recepie file the "roscpp" wasn't added under DEPENDS, as a result the compiler is looking under PC's /opt/ros/hydro/libroscpp_serialization.so which is a 64 file. And hence you are getting error during compilation.
+TO get rid of this error add "roscpp" in DEPENDS of meta-ros/recipes-ros/geometry/kdl-conversions_1.10.8.bb file
+
+Changes have been done to the following files:
+added roscpp to: 
+/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry/eigen-conversions_1.10.8.bb
+/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros/rosunit_1.10.10.bb
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry-experimental/tf2_0.4.12.bb, do_compile
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-comm/rosconsole_1.10.11.bb, do_compile
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-comm/rosbag-storage_1.10.11.bb, do_compile
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry/kdl-conversions_1.10.8.bb, do_compile
+
+############################################
+ERROR #2
+
+
+| 
+| -- Build files have been written to: /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/collada-urdf/1.10.20-r0/robot_model-1.10.20/collada_urdf/build
+| sed: can't read /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/collada-urdf/1.10.20-r0/robot_model-1.10.20/collada_urdf/CMakeFiles/collada_urdf.dir/build.make: No such file or directory
+| WARNING: exit code 2 from a shell command.
+| ERROR: Function failed: do_configure (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/collada-urdf/1.10.20-r0/temp/log.do_configure.12215)
+ERROR: Task 4163 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/robot-model/collada-urdf_1.10.20.bb, do_configure) failed with exit code '1'
+NOTE: Tasks Summary: Attempt
+
+
+SOLUTION 
+### *** followed this ****
+Replaced ${B}/CMakeFiles/$f/build.make with ${B}/build/CMakeFiles/$f/build.make in the file,
+/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/robot-model/collada-urdf_1.10.20.bb
+
+Replaced ${B}/build/octomap_ros.dir/build.make ${B}/build/CMakeFiles/octomap_ros.dir/build.make
+/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/octomap-ros/octomap-ros_0.3.1.bb
+
+
+### OR ###
+
+Edit /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/oe-core/meta/classes/cmake.bbclass
+add following lines
+
+ DEPENDS_prepend = "cmake-native "
++B = "${WORKDIR}/build"
+# We need to unset CCACHE otherwise cmake gets too confused
+CCACHE = ""
+
+############################################
+ERROR #3
+
+| make[2]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/communication-tests/0.1.3-r0/ros_realtime_tests-0.1.3/communication_tests/build'
+| make[1]: *** [CMakeFiles/communication_tests_subscriber.dir/all] Error 2
+| make[1]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/communication-tests/0.1.3-r0/ros_realtime_tests-0.1.3/communication_tests/build'
+| make: *** [all] Error 2
+| ERROR: oe_runmake failed
+| WARNING: exit code 1 from a shell command.
+| ERROR: Function failed: do_compile (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/communication-tests/0.1.3-r0/temp/log.do_compile.16788)
+ERROR: Task 5469 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/cyclic-timer-tests_0.1.3.bb, do_compile) failed with exit code '1'
+ERROR: Task 5454 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/communication-tests_0.1.3.bb, do_compile) failed with exit code '1'
+ERROR: Task 5484 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/oneshot-timer-tests_0.1.3.bb, do_compile) failed with exit code '1'
+NOTE: Tasks Summary: Attempted 9569 tasks of which 9547 didn't need to be rerun and 4 failed.
+No currently running tasks (9569 of 9693)
+
+Summary: 4 tasks failed:
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/vision-opencv/cv-bridge_1.10.18.bb, do_configure
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/cyclic-timer-tests_0.1.3.bb, do_compile
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/communication-tests_0.1.3.bb, do_compile
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/oneshot-timer-tests_0.1.3.bb, do_compile
+Summary: There was 1 WARNING message shown.
+Summary: There were 4 ERROR messages shown, returning a non-zero exit code.
+[GLSDK]>
+
+SOLUTION :
+
+temporarily removing 
+cyclic-timer-tests
+communication-tests
+oneshot-timer-tests
+froms package-groups ros world.bb
+
+#############################################
+ERROR 4
+
+
+  Boost include path:
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/include
+
+
+  The following Boost libraries could not be found:
+
+          boost_python
+
+  No Boost libraries were found.  You may need to set BOOST_LIBRARYDIR to the
+  directory containing Boost libraries or BOOST_ROOT to the location of
+  Boost.
+Call Stack (most recent call first):
+  CMakeLists.txt:6 (find_package)
+
+
+-- Configuring incomplete, errors occurred!
+WARNING: exit code 1 from a shell command.
+ERROR: Function failed: do_configure (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/cv-bridge/1.10.18-r0/temp/log.do_configure.16746)
+
+#############################################
+
+#ERROR 5
+
+ WARNING: exit code 255 from a shell command.
+| ERROR: Function failed: do_rootfs (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/dra7xx_evm-oe-linux-gnueabi/arago-glsdk-multimedia-image/1.0-r0/temp/log.do_rootfs.25935)
+ERROR: Task 8 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-glsdk/meta-arago-distro/recipes-core/images/arago-glsdk-multimedia-image.bb, do_rootfs) failed with exit code '1'
+NOTE: Tasks Summary: Attempted 9632 tasks of which 9626 didn't need to be rerun and 1 failed.
+No currently running tasks (9632 of 9633)
+
+Summary: 1 task failed:
+  /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-glsdk/meta-arago-distro/recipes-core/images/arago-glsdk-multimedia-image.bb, do_rootfs
+
+SOLUTION : 
+
+This error was caused beacause rootfs could't find gst-meta-base. So add "gst-meta-base" under packages list in "packagegroups-ros-world.bb"
+
+##############################################
+
+
+#ERROR 6
+
+| make -f CMakeFiles/roslib.dir/build.make CMakeFiles/roslib.dir/build
+| make[2]: Entering directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/ros-1.10.10/core/roslib/build'
+| make[2]: *** No rule to make target `/opt/ros/hydro/lib/librospack.so', needed by `devel/lib/libroslib.so'.  Stop.
+| make[2]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/ros-1.10.10/core/roslib/build'
+| make[1]: *** [CMakeFiles/roslib.dir/all] Error 2
+| make[1]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/ros-1.10.10/core/roslib/build'
+| make: *** [all] Error 2
+| ERROR: oe_runmake failed
+| WARNING: exit code 1 from a shell command.
+| ERROR: Function failed: do_compile (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/temp/log.do_compile.25384)
+ERROR: Task 2812 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros/roslib_1.10.10.bb, do_compile) failed with exit code '1'
+NOTE: Tasks Summary: Attempted 1356 tasks of which 1352 didn't need to be rerun and 1 failed.
+Waiting for 0 running tasks to finish:
+
+#SOLUTION- Caused because of easy_install update error
+	
+	host$ easy_install -U setuptools
+
+#############################################
+
+
+
+
+   
+
+

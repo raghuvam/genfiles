@@ -1,0 +1,9 @@
+
+## 20th oct 2014
+ 
+1. Created a ROS node which implements the frame Handler function and consumes the camera encoded buffer data from vision SDK's null link, and writes it to a file (H.264 format). Compiled the ROS node and tested it on Vayu. The .h264 file was created but the file is not playing the video. Trying to debug this issue with Kedar's help. Once the stream is obtained correctly, the next step will be streaming using ROS topics.
+
+2. Installed yocto tools to build ROS on GLSDK image. Facing some issues with do_fetch and do_compile commands of yocto while building ros layer. Trying to debug these errors.
+
+
+

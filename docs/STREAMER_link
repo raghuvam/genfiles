@@ -1,0 +1,27 @@
+##Creating StreamerLink## 
+
+* cd VISION_SDK_INSTLL_DIR/vision_sdk 
+
+* Create a streamerLink.h file under ./include/link_api/streamerLink.h
+     
+     host$ gedit ./include/link_api/streamerLink.h
+
+* Copy the nulllink.h content to streamLink.h and replace Null with streamer everywhere.
+     
+* cd linux/src/links
+
+* mkdir streamer
+
+* cd streamer
+
+* copy all files under linux/sr/links/null to cd
+
+* And rename the file with streamerLink_priv.h and StreamerLink_tsk.c. 
+
+* In those files   replace all variable, funcitons and with StreamerLink the StreamerLink_tsk.c, in streamerLink_drv_processes() remove the fwrite and call a function called framestreamHandler(StreamLink_obj * frameinfo) and also declare the funciton in streamLink.h file. 
+
+* But the definition of the function is given in the ROS code (.cpp) file under ros workspace.
+And define the function in the ROS code.This framerstreamHandler is a link between ROS and visionSDk code. When ever this ROS node is launched it call the streamer link which will inturn call the framer Handler function and with frame info as a parameter and then we can all the processing or streaming on the frame in this funciton.
+
+* 
+
