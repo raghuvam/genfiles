@@ -15,5 +15,61 @@
  	host$ source ${UBUNTU_ARM_ROOTFS}/opt/ros/hydro/setup.sh
  	host$ source ${UBUNTU_ARM_ROOTFS}/opt/ros/hydro/setup.bash
 
-> 
+> Now initialize the ROS workspace 
+	host$ cd ws_ros_arm/src
+	host$ catkin_init_workspace
+
+> Copy Hello world ros package 
+	host$ cp <hello_world package source dir> .
+  
+  After this step you must be able to see src/hello_world dir.	
+	
+> 	The hello world ros package's CMakeLists.txt is not configured 
+	for cross compilation. So, copy the crosscompile.txt from repo
+	and paste it under src/hello_world.txt
+	then the directory looks likes this,
+	
+	host$ ls ws_ros_arm/src/hello_world
+	-> include
+	-> src
+	-> CMakeLists.txt
+	-> crosscompile.txt
+	-> package.xml
+
+> Add the following lines in the CMakeLists.txt,
+	+++ include(crosscompile.txt)
+	+++ target_link_libraries(hello_world_node 
+								${CATKIN_LIBRARIES} 
+								${ROS_COMMON_LIBS} 
+								${GEN_DEPEND_LIBS}
+								) 
+
+Note: The crosscompile.txt provides generic libraries for 32 bit 
+	  libraries path and include paths from ubuntu_rootfs_arm dir,
+	  if your package needs any new libraries, set new vaiable ${VAR}
+	  with all the library paths in crosscompile.txt. And add the 
+	  eg: 
+	  ## add in crosscompile.txt
+	  set(PKG_LIB_DEPENDENCIES -L<Dir containing library> -l<libname1> -l<libname2>)
+	  
+	  ## and modify target_link_libraries in CMakeLists.txt
+	  target_link_libraries(hello_world_node 
+								${CATKIN_LIBRARIES} 
+								${ROS_COMMON_LIBS} 
+								${GEN_DEPEND_LIBS}
+								${PKG_LIB_DEPENDENCIES}
+								) 
+	Sometimes undefined reference errors may occur, then also repeat the
+	above procedure.
+	 															
+>
+	  
+	   
+	   
+
+
+
+	
+
+
 

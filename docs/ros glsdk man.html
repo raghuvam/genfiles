@@ -1,0 +1,385 @@
+<h1>ROS GSLDK MANUAL</h1>
+
+<p>1. <a href="#BUILDING ROS on GLSDK with YOCTO PROJECT">Building ROS on GLSDK with YOCTO Project </a></p>
+
+<p>2. <a href="#RUNNING ROSCORE ON VAYU">Running ROSCORE on Vayu</a></p>
+
+<p>3. <a href="#ROS CROSS COMPILATION">ROS cross compilation setup</a></p>
+
+<p>4. <a href="#RUNNING ROS PACKAGE ON VAYU">Running a ROS package on Vayu</a></p>
+
+<p>5. <a href="#Create a ROS package (cross compilation)">Creating a ROS package for Vayu</a></p>
+
+<p>6. <a href="#ROS-GLSDK YOCTO BUILD KNOW ISSUES AND SOLUTIONS">Known issues with ROS-GLSDK build</a></p>
+
+<h2>&nbsp;</h2>
+
+<h2><a id="BUILDING ROS on GLSDK with YOCTO PROJECT" name="BUILDING ROS on GLSDK with YOCTO PROJECT">&nbsp;BUILDING ROS on GLSDK with YOCTO PROJECT </a></h2>
+
+<p>1 Make sure that GLSDK is installed on host machine.</p>
+
+<p>2. Setup the GLSDK yocto toolchain, refer to <a href="http://processors.wiki.ti.com/index.php/DRA7xx_GLSDK_Software_Developers_Guide#Building_Yocto_Filesystem">Building_Yocto_Filesystem</a> for the setup.</p>
+
+<p>3. Once the GLSDK setup is done and setup-yocto.sh is run, add meta-ros layer to configs file,<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host $&nbsp; gedit&nbsp; ./configs/glsdk/glsdk-6.10.00.02.txt</p>
+
+<p>&nbsp;&nbsp; and add the following line above meta-glsdk git repository link,<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;meta-ros,git://github.com/bmwcarit/meta-ros.git,master,58f13aa227651dafad43c6975c788b63dc198b88,layers=</p>
+
+<p>4. Add the ros packagegroups to the image recipe which is going to be build,(i.e arago-glsdk-multimedia-image.bb)</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host $&nbsp; gedit ./sources/meta-glsdk/meta-arago-distro/recipes-core/images/arago-glsdk-multimedia-image.bb</p>
+
+<p>&nbsp;&nbsp; and append ros -packagegroup &amp; gst packagegroup to IMAGE_INSTALL as follow,</p>
+
+<p><em><strong>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;IMAGE_INSTALL += &ldquo;\<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-base \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-console \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-glsdk-console \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-glsdk-multimedia \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-tisdk-connectivity \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-test \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-tisdk-matrix \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-arago-gst \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-ros-comm \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;packagegroup-ros-world \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&ldquo;</strong></em></p>
+
+<p>5. Edit packagegroup-ros-world and remove the packages that are not needed from RDEPENDS_${PN} variable. The packagegroup-ros-comm.bb</p>
+
+<p>&nbsp;&nbsp;&nbsp; and packagegroup-ros-world.bb recipes files are located at ./sources/meta-ros/recipes-ros/packagegroup</p>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;host $ gedit ./sources/meta-ros/recipes-ros/packagegroups/packagegroup-ros-world.bb</p>
+
+<p>&nbsp;&nbsp;&nbsp; and remove the following lines from RDEPENDS_${PN},</p>
+
+<p>&nbsp;&nbsp;&nbsp; ##In the file</p>
+
+<p><em><strong>&nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp; sound-play \<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; communication-tests \<br />
+&nbsp;&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; cyclic-timer-tests \<br />
+&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; oneshot-timer-tests \<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; gscam \</strong></em></p>
+
+<p>6. Once the ros-packagegroups are added we can run the build by running the script build-core-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; sdk.sh,<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host $ ./build-core-sdk.sh&nbsp; dra7xx-evm<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;NOTE:<br />
+&nbsp;&nbsp; &nbsp;This script will invoke Bitbake which will generate list of tasks and execute them. At the<br />
+&nbsp;&nbsp; &nbsp;end the script will build the arago-glsdk-multimedia-image, and generated images can be found<br />
+&nbsp;&nbsp; &nbsp;in &lt;ti-glsdk-setup-path &gt;yocto-layers/build/arago-tmp-external-linaro-toolchain/deploy/images<br />
+&nbsp;&nbsp; &nbsp;directory.<br />
+&nbsp;&nbsp; &nbsp;<br />
+7.&nbsp; Copy the arago-glsdk-multimedia-image-&lt;MACHINE-NAME&gt;-&lt;DATE&gt;.rootfs.tar.gz to filesystem folder and run mksdboot.sh to prepare bootable sd card,</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host $ cp ./build/arago-tmp-external-linaro-toolchain/deploy/images/ arago-glsdk-multimedia-image-&lt;MACHINE-NAME&gt;-&lt;DATE&gt;.rootfs.tar.gz ${GLSDK}/filesystem<br />
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp;&nbsp;&nbsp; * Now connect SD card to PC<br />
+&nbsp;&nbsp;&nbsp;&nbsp; * Make two partitions on the sd card boot(fat32) and rootfs (ext4).<br />
+&nbsp;&nbsp;&nbsp;&nbsp; * Find out the SD card device name<br />
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host $&nbsp; sudo fdisk -l<br />
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp; * Then run mksdboot.sh,<br />
+&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host $ sudo ${GLSDK}/bin/mksdboot.sh --device /dev/&lt;device-name&gt; --sdk ${GLSDK}<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Eg: sudo ${GLSDK}/bin/mksdboot.sh --device /dev/sdc --sdk ${GLSDK}<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+8. After completion of step 10, eject the SD card, insert it on Vayu and reboot it.</p>
+
+<h2><br />
+&nbsp; <a id="RUNNING ROSCORE ON VAYU" name="RUNNING ROSCORE ON VAYU">RUNNING ROSCORE ON VAYU</a></h2>
+
+<p>9. Create a ros_init script file in /etc/init.d and source ros_init on every boot, this script will export ROS environment variables.</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target $ gedit /etc/init.d/ros_init</p>
+
+<p>&nbsp;&nbsp; &nbsp;and add the following lines.</p>
+
+<p><em><strong>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;## file: /etc/init.d/ros_init<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;#!/bin/sh</strong></em></p>
+
+<p><em><strong>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;export ROS_ROOT=/opt/ros/hydro<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;export PATH=$PATH:/opt/ros/hydro/bin<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;export LD_LIBRARY_PATH=/opt/ros/hydro/lib<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;export PYTHONPATH=/opt/ros/hydro/lib/python2.7/site-packages<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;export ROS_MASTER_URI=http://localhost:11311<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;export CMAKE_PREFIX_PATH=/opt/ros/hydro<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;touch /opt/ros/hydro/.catkin<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;## EOF</strong></em><br />
+10. source the ros_init.sh file to setup the ROS environment variable.</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target $ source /etc/init.d/ros_init<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+11. Finally, you can start roscore with<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target $ roscore</p>
+
+<h2>&nbsp;<a id="ROS CROSS COMPILATION" name="ROS CROSS COMPILATION"> ROS CROSS COMPILATION SETUP</a></h2>
+
+<p>###NOTE###<br />
+host$ = PC terminal<br />
+target$ = TDA2xx Vayu terminal</p>
+
+<p><br />
+1. Extract ros_cross_setup_X_X.tar.gz<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ tar -xvzf ros_cross_setup_X_X.tar.gz</p>
+
+<p>2. Run the setup.sh file</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ . ./setup.sh<br />
+&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;IMP: The &quot;.&quot;(Dot) before ./setup.sh is given to run setup script in the<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; same shell.</p>
+
+<p>&nbsp;&nbsp; The setup.sh extract the glsdk tar ball and some suppporting libraries<br />
+&nbsp;&nbsp;&nbsp; to ${GLSDK_ROOTFS_PATH}. It also creates ros workspace at ROS_WS_PATH</p>
+
+<p>3. Export ${GLSDK_ROOTFS_PATH} and ${ROS_WS_PATH}<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;GLSDK_ROOTFS_PATH = &lt;path where glsdk filesystem needs to be extracted&gt;<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;ROS_WS_PATH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = &lt;path where ROS crosscompilation needs to be setup&gt;<br />
+&nbsp;&nbsp; Eg:<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ export GLSDK_ROOTFS_PATH=~/glsdk_ros<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ export ROS_WS_PATH=~/catkin_ws_vayu<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+4. Run create_links.sh script.<br />
+&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ sh create_links.sh<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+5. Now the setup is ready for ROS cross compilation. Copy an example ROS<br />
+&nbsp;&nbsp; package from examples folder under ros_cross_setup* dir into<br />
+&nbsp;&nbsp; $ROS_WS_PATH/src and run catkin.sh to compile.Source ros_init.sh run before<br />
+&nbsp;&nbsp; catkin.sh and also export GLSDK_ROOTFS_PATH, ROS_WS_PATH if they are not set.<br />
+&nbsp; &nbsp;<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ cp -r examples/hello_world&nbsp; ${ROS_WS_PATH}/src<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ cd $ROS_WS_PATH<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ source&nbsp; ros_init.sh<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ sh catkin.sh<br />
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+6. Once the ros packages are successfully compiled, the executables are generated<br />
+&nbsp;&nbsp; under the directory &quot;${ROS_WS_PATH}/devel/lib/&lt;package_name&gt;&quot; and the shared<br />
+&nbsp;&nbsp; libraries are generated under &quot;${ROS_WS_PATH}/devel/lib&quot;.</p>
+
+<h2>&nbsp;<a id="RUNNING ROS PACKAGE ON VAYU" name="RUNNING ROS PACKAGE ON VAYU">RUNNING ROS PACKAGE ON VAYU&nbsp;</a></h2>
+
+<p>1. &nbsp;&nbsp; &nbsp;Prepare the SD card with GLSDK-ROS image and mount the SD card on to the linuc PC.<br />
+&nbsp;&nbsp; &nbsp;And copy the catkin_ws_vayu (or) ${ROS_WS_PATH} directory to &quot;/media/rootfs/home/root&quot;<br />
+&nbsp;&nbsp; &nbsp;of bootable SD card.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ cp -rv ${ROS_WS_PATH} /media/rootfs/home/root<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+2.&nbsp;&nbsp; &nbsp;Once the files are copied into the SD card, eject the SD card and boot Vayu with<br />
+&nbsp;&nbsp; &nbsp;the same SD card. Login to the shell, change directory to ros workspace directory<br />
+&nbsp;&nbsp; &nbsp;(directory copied from PC)and run rosrun_setup.sh<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target-login$ root<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target$ cd /home/root/catkin_ws_vayu<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; target$ sh rosrun_setup.sh<br />
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+3. Run roscore and then ros node.</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target$ roscore &amp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target$ rosrun hello_world hello_world_node<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;IMP: Pressing tab may not show the hello_world node (or) other packages under catkin_ws_vayu,<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; it is preferred to type the entire command and then press enter. It starts printing<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &quot;This is hello_world_node&quot;</p>
+
+<h2><a id="Create a ROS package (cross compilation)" name="Create a ROS package (cross compilation)">Create a ROS package (cross compilation) </a></h2>
+
+<p>host$ &nbsp;&nbsp; &nbsp;=&nbsp;&nbsp; &nbsp;PC terminal<br />
+target$ =&nbsp;&nbsp; &nbsp;Vayu terminal<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+This manual assumes that you have already read the README file and<br />
+have done the ros cross compialtion setup. And also expects you have<br />
+a little exposure to ROS package &amp; workspace structure.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+1.&nbsp;&nbsp; &nbsp;Export the ros cross compilation setup environment variables ROS_WS_PATH, GLSDK_ROOTFS_PATH.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; host$ ROS_WS_PATH=~/catkin_ws_vayu<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ GLSDK_ROOTFS_PATH=~/glsdk_ros</p>
+
+<p>2.&nbsp;&nbsp; &nbsp;Goto ROS workspace and init ros variables,</p>
+
+<p>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ cd $ROS_WS_PATH<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ source ros_init.sh&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;</p>
+
+<p>3.&nbsp;&nbsp; &nbsp;Copy your ros package (Eg: ROS_DEMO) which is needed to be cross compiled<br />
+&nbsp;&nbsp; &nbsp;to the ${ROS_WS_PATH}/src directory.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;Eg:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ /path/to/ROS_DEMO ./src</p>
+
+<p>4. Copy the crosscompile.txt and optional.txt files to the ROS_DEMO directory/</p>
+
+<p>&nbsp;&nbsp; &nbsp;Eg:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ cp -r crosscompile.txt optional.txt ./src/ROS_DEMO</p>
+
+<p>5. Add the following statement in the CMakeLists.txt file, just before the project().</p>
+
+<p>&nbsp;&nbsp; &nbsp;Eg:<br />
+&nbsp;&nbsp; &nbsp;Open the file,<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ gedit ROS_DEMO/CMakeLists.txt<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;In the file,&nbsp;<br />
+&nbsp;&nbsp; &nbsp;##CMAKE LISTS FILE<br />
+<em><strong>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;cmake_minimum_required(VERSION 2.8.3)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; include(crosscompile.txt)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; project(template_pkg)</strong></em><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+6.&nbsp; Also edit the target_link_libraries() statement/statements in CMakeLists.txt file<br />
+&nbsp;&nbsp; &nbsp;as follows,&nbsp;&nbsp;<br />
+&nbsp;&nbsp; &nbsp;Eg:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;target_link_libraries( ROS_DEMO_node<br />
+&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; ${catkin_LIBRARIES} ${MISC_SHARED_LIBS} ${ROS_COMMON_LIBS} ${BOOST_SHARED_LIBS} ${CV_SHARED_LIBS} ${X11_SHARED_LIBS}<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;)</p>
+
+<p>7. Now run the compile the package,<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;host$ sh catkin.sh</p>
+
+<h2><a id="ROS-GLSDK YOCTO BUILD KNOW ISSUES AND SOLUTIONS" name="ROS-GLSDK YOCTO BUILD KNOW ISSUES AND SOLUTIONS">ROS-GLSDK YOCTO BUILD: KNOW ISSUES AND SOLUTIONS</a></h2>
+
+<p>##########################################</p>
+
+<p><strong>ERROR #1</strong></p>
+
+<p>/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/bin/arm-linux-gnueabihf-g++&nbsp; -fPIC&nbsp; -march=armv7-a -marm -mthumb-interwork -mfloat-abi=hard -mfpu=neon -mtune=cortex-a15&nbsp; --sysroot=/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm&nbsp; -isystem/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/arm-linux-gnueabihf/include&nbsp; -fstack-protector -O2 -pipe -g -feliminate-unused-debug-types -fpermissive -fpermissive&nbsp;&nbsp; -L/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/arm-linux-gnueabihf/lib -Wl,-rpath-link,/user/x0221391/arm_images/gcc-linaro-arm-linux-gnueabihf-4.7-2013.03-20130313_linux/arm-linux-gnueabihf/lib -Wl,-O1 -Wl,--hash-style=gnu -shared -Wl,-soname,libkdl_conversions.so -o devel/lib/libkdl_conversions.so CMakeFiles/kdl_conversions.dir/src/kdl_msg.cpp.o&nbsp; -L/opt/ros/hydro/lib /opt/ros/hydro/lib/libroscpp_serialization.so /opt/ros/hydro/lib/librostime.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libboost_date_time-mt.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libboost_system-mt.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libboost_thread-mt.so /opt/ros/hydro/lib/libcpp_common.so /home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/libconsole_bridge.so /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib/liborocos-kdl.so.1.3.0 -Wl,-rpath,/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/sysroots/dra7xx-evm/usr/lib:/opt/ros/hydro/lib:<br />
+| /opt/ros/hydro/lib/libroscpp_serialization.so: file not recognized: File format not recognized<br />
+| collect2: error: ld returned 1 exit status<br />
+| make[2]: *** [devel/lib/libkdl_conversions.so] Error 1<br />
+| make[2]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/kdl-conversions/1.10.8-r0/geometry-1.10.8/kdl_conversions/build&#39;<br />
+| make[1]: *** [CMakeFiles/kdl_conversions.dir/all] Error 2<br />
+| make[1]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/kdl-conversions/1.10.8-r0/geometry-1.10.8/kdl_conversions/build&#39;<br />
+| make: *** [all] Error 2<br />
+| ERROR: oe_runmake failed<br />
+| WARNING: exit code 1 from a shell command.<br />
+| ERROR: Function failed: do_compile (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/kdl-conversions/1.10.8-r0/temp/log.do_compile.23661)<br />
+ERROR: Task 3759 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry/kdl-conversions_1.10.8.bb, do_compile) failed with exit code &#39;1&#39;</p>
+
+<p><strong>SOLUTION :</strong><br />
+Error caused because in the kdl-conversions_1.10.8.bb recepie file the &quot;roscpp&quot; wasn&#39;t added under DEPENDS, as a result the compiler is looking under PC&#39;s /opt/ros/hydro/libroscpp_serialization.so which is a 64 file. And hence you are getting error during compilation.<br />
+TO get rid of this error add &quot;roscpp&quot; in DEPENDS of meta-ros/recipes-ros/geometry/kdl-conversions_1.10.8.bb file</p>
+
+<p>The same change has been done to the following files:<br />
+Added roscpp to:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry/eigen-conversions_1.10.8.bb<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros/rosunit_1.10.10.bb<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry-experimental/tf2_0.4.12.bb, do_compile<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-comm/rosconsole_1.10.11.bb, do_compile<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-comm/rosbag-storage_1.10.11.bb, do_compile<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/geometry/kdl-conversions_1.10.8.bb, do_compile</p>
+
+<p>############################################<br />
+<strong>ERROR #2</strong><br />
+| -- Build files have been written to: /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/collada-urdf/1.10.20-r0/robot_model-1.10.20/collada_urdf/build<br />
+| sed: can&#39;t read /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/collada-urdf/1.10.20-r0/robot_model-1.10.20/collada_urdf/CMakeFiles/collada_urdf.dir/build.make: No such file or directory<br />
+| WARNING: exit code 2 from a shell command.<br />
+| ERROR: Function failed: do_configure (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/collada-urdf/1.10.20-r0/temp/log.do_configure.12215)<br />
+ERROR: Task 4163 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/robot-model/collada-urdf_1.10.20.bb, do_configure) failed with exit code &#39;1&#39;<br />
+NOTE: Tasks Summary: Attempt</p>
+
+<p><br />
+<strong>SOLUTION:</strong><br />
+### *** followed this ****<br />
+Replace ${B}/CMakeFiles/$f/build.make with ${B}/build/CMakeFiles/$f/build.make in the file,<br />
+/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/robot-model/collada-urdf_1.10.20.bb</p>
+
+<p>Replaced ${B}/build/octomap_ros.dir/build.make ${B}/build/CMakeFiles/octomap_ros.dir/build.make<br />
+/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/octomap-ros/octomap-ros_0.3.1.bb</p>
+
+<p><br />
+<strong>### OR ###</strong></p>
+
+<p>Edit /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/oe-core/meta/classes/cmake.bbclass<br />
+add following lines</p>
+
+<p>&nbsp;DEPENDS_prepend = &quot;cmake-native &quot;<br />
++B = &quot;${WORKDIR}/build&quot;<br />
+# We need to unset CCACHE otherwise cmake gets too confused<br />
+CCACHE = &quot;&quot;</p>
+
+<p>############################################<br />
+<strong>ERROR #3</strong></p>
+
+<p>| make[2]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/communication-tests/0.1.3-r0/ros_realtime_tests-0.1.3/communication_tests/build&#39;<br />
+| make[1]: *** [CMakeFiles/communication_tests_subscriber.dir/all] Error 2<br />
+| make[1]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/communication-tests/0.1.3-r0/ros_realtime_tests-0.1.3/communication_tests/build&#39;<br />
+| make: *** [all] Error 2<br />
+| ERROR: oe_runmake failed<br />
+| WARNING: exit code 1 from a shell command.<br />
+| ERROR: Function failed: do_compile (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/communication-tests/0.1.3-r0/temp/log.do_compile.16788)<br />
+ERROR: Task 5469 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/cyclic-timer-tests_0.1.3.bb, do_compile) failed with exit code &#39;1&#39;<br />
+ERROR: Task 5454 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/communication-tests_0.1.3.bb, do_compile) failed with exit code &#39;1&#39;<br />
+ERROR: Task 5484 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/oneshot-timer-tests_0.1.3.bb, do_compile) failed with exit code &#39;1&#39;<br />
+NOTE: Tasks Summary: Attempted 9569 tasks of which 9547 didn&#39;t need to be rerun and 4 failed.<br />
+No currently running tasks (9569 of 9693)</p>
+
+<p>Summary: 4 tasks failed:<br />
+&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/vision-opencv/cv-bridge_1.10.18.bb, do_configure<br />
+&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/cyclic-timer-tests_0.1.3.bb, do_compile<br />
+&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/communication-tests_0.1.3.bb, do_compile<br />
+&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros-realtime-tests/oneshot-timer-tests_0.1.3.bb, do_compile<br />
+Summary: There was 1 WARNING message shown.<br />
+Summary: There were 4 ERROR messages shown, returning a non-zero exit code.<br />
+[GLSDK]&gt;</p>
+
+<p><strong>SOLUTION :</strong></p>
+
+<p>Remove these ros packages from packagegroup-ros-world.bb file.<br />
+&nbsp;&nbsp;&nbsp;&nbsp; cyclic-timer-tests<br />
+&nbsp;&nbsp;&nbsp;&nbsp; communication-tests<br />
+&nbsp;&nbsp;&nbsp;&nbsp; oneshot-timer-tests</p>
+
+<p>#############################################</p>
+
+<p><strong>ERROR #4</strong></p>
+
+<p>&nbsp;WARNING: exit code 255 from a shell command.<br />
+| ERROR: Function failed: do_rootfs (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/dra7xx_evm-oe-linux-gnueabi/arago-glsdk-multimedia-image/1.0-r0/temp/log.do_rootfs.25935)<br />
+ERROR: Task 8 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-glsdk/meta-arago-distro/recipes-core/images/arago-glsdk-multimedia-image.bb, do_rootfs) failed with exit code &#39;1&#39;<br />
+NOTE: Tasks Summary: Attempted 9632 tasks of which 9626 didn&#39;t need to be rerun and 1 failed.<br />
+No currently running tasks (9632 of 9633)</p>
+
+<p>Summary: 1 task failed:<br />
+&nbsp; /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-glsdk/meta-arago-distro/recipes-core/images/arago-glsdk-multimedia-image.bb, do_rootfs</p>
+
+<p><strong>SOLUTION :</strong></p>
+
+<p>This error occurs since do_rootfs commnd could&#39;t find gst-meta-base. So add &quot;gst-meta-base&quot; under packages list in &quot;packagegroups-ros-world.bb&quot;</p>
+
+<p>##############################################</p>
+
+<p><strong>ERROR #5</strong></p>
+
+<p>| make -f CMakeFiles/roslib.dir/build.make CMakeFiles/roslib.dir/build<br />
+| make[2]: Entering directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/ros-1.10.10/core/roslib/build&#39;<br />
+| make[2]: *** No rule to make target `/opt/ros/hydro/lib/librospack.so&#39;, needed by `devel/lib/libroslib.so&#39;.&nbsp; Stop.<br />
+| make[2]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/ros-1.10.10/core/roslib/build&#39;<br />
+| make[1]: *** [CMakeFiles/roslib.dir/all] Error 2<br />
+| make[1]: Leaving directory `/home/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/ros-1.10.10/core/roslib/build&#39;<br />
+| make: *** [all] Error 2<br />
+| ERROR: oe_runmake failed<br />
+| WARNING: exit code 1 from a shell command.<br />
+| ERROR: Function failed: do_compile (log file is located at /user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/build/arago-tmp-external-linaro-toolchain/work/cortexa15hf-vfp-neon-3.10-oe-linux-gnueabi/roslib/1.10.10-r0/temp/log.do_compile.25384)<br />
+ERROR: Task 2812 (/user/x0221391/ti-glsdk_dra7xx-evm_6_10_00_02/yocto-layers/sources/meta-ros/recipes-ros/ros/roslib_1.10.10.bb, do_compile) failed with exit code &#39;1&#39;<br />
+NOTE: Tasks Summary: Attempted 1356 tasks of which 1352 didn&#39;t need to be rerun and 1 failed.<br />
+Waiting for 0 running tasks to finish:</p>
+
+<p><strong>SOLUTION: </strong></p>
+
+<p>Occurs due to dependency on <strong>easy_install updates</strong><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong> host$</strong> easy_install -U setuptools</p>
+
+<p>#############################################</p>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;</p>
+
+<p>&nbsp;</p>
+
